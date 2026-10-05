@@ -2,6 +2,8 @@
 
 Eight separate, commented C++17 programs for an intermediate college Design and Analysis of Algorithms lab. The repository includes actual measurements, raw CSV trials, PNG/SVG graphs, and a [lab report](REPORT.md).
 
+Read the [44-page detailed PDF study guide](docs/Sorting_Programs_Detailed_Explanation.pdf) for code walkthroughs, worked dry runs, complexity analysis, graph interpretation, viva questions, and complete source listings. The guide explains source version `14b5fd3` and its recorded measurements.
+
 ## Programs
 
 | Task | Source file | Output |
