@@ -9,7 +9,7 @@ all: $(BINARIES)
 build:
 	mkdir -p build
 
-build/%: src/%.cpp src/experiment.h | build
+build/%: src/%.cpp | build
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 run: all
@@ -22,7 +22,7 @@ run: all
 	./build/bucket_sort
 	./build/counting_sort
 
-build/test_sorts: tests/test_sorts.cpp $(wildcard src/*.cpp) src/experiment.h | build
+build/test_sorts: tests/test_sorts.cpp $(wildcard src/*.cpp) | build
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 test: build/test_sorts

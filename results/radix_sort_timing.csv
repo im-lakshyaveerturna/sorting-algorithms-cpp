@@ -1,2 +1,2 @@
 algorithm,n,trials,average_milliseconds
-radix_sort,25,1000,0.000291
+radix_sort,25,1000,0.000768

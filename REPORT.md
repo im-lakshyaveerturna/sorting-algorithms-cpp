@@ -8,8 +8,8 @@
 - Insertion follows the supplied INSERTION.CPP: increment only inside the shifting loop. This counts successful comparisons/shifts and excludes failed value comparisons.
 - Merge, quick and heap count each executed value comparison, including false outcomes. These counters therefore use a different convention from the supplied insertion example.
 - Average comparisons = total recorded counter across ten trials / 10.
-- Timing: steady_clock, expressed in milliseconds, with a warmup before each case.
-- Input creation, copying, validation and printing are outside the timed region.
+- Timing: steady_clock, expressed in milliseconds, with a warmup before each case. Each program is self-contained and uses arrays and ordinary functions.
+- Input creation, copying, validation and printing are outside the timed region. Random insertion-timing input uses a simple Fisher-Yates shuffle.
 - Memory allocation required by a sorting algorithm is inside the timed region.
 - Sorting is checked against the complete expected output after every measured run.
 
@@ -124,9 +124,9 @@ Insertion sort grows quadratically on these random arrays. Merge, quick and heap
 
 | Case | Input order | Trials | Mean time (ms) |
 |---|---|---:|---:|
-| Best | Ascending | 5 | 0.006475 |
-| Average | Fresh random permutation per trial | 5 | 22.889134 |
-| Worst | Descending | 5 | 38.572533 |
+| Best | Ascending | 5 | 0.008208 |
+| Average | Fresh random permutation per trial | 5 | 32.048183 |
+| Worst | Descending | 5 | 56.559575 |
 
 The best case runs in O(n); the average and worst cases run in O(n²). Under the supplied shift-count convention, the best case records 0 and the reverse-sorted distinct worst case records n(n − 1)/2. The separate timing implementation does not maintain a counter.
 
@@ -134,11 +134,11 @@ The best case runs in O(n); the average and worst cases run in O(n²). Under the
 
 | Algorithm | Elements | Trials | Mean time (ms) |
 |---|---:|---:|---:|
-| Radix Sort | 25 | 1000 | 0.000291 |
-| Bucket Sort | 25 | 1000 | 0.000574 |
-| Counting Sort | 25 | 1000 | 0.000884 |
+| Radix Sort | 25 | 1000 | 0.000768 |
+| Bucket Sort | 25 | 1000 | 0.000821 |
+| Counting Sort | 25 | 1000 | 0.000668 |
 
-Each program sorts 25 elements. Radix and counting sort use the same integer input. Bucket sort uses those values divided by 1000, to satisfy its [0, 1) input domain. Inputs and sorted outputs appear in the README and in program output.
+Each program sorts 25 elements. Radix and counting sort use the same integer input. Bucket sort uses those values divided by 1000, to satisfy its [0, 1) input domain, and allocates one bucket list per input element. Inputs and sorted outputs appear in the README and in program output.
 
 These tiny timings are machine-specific and include timer overhead. Averaging 1,000 runs reduces noise, but the results do not establish a general speed ranking.
 
@@ -146,7 +146,7 @@ These tiny timings are machine-specific and include timer overhead. Averaging 1,
 
 - All eight programs compile with C++17, -O2, -Wall, -Wextra and -Wpedantic.
 - Correctness tests cover all permutations through seven elements for the four comparison sorts, random duplicate-heavy inputs, empty and singleton arrays, and integer extremes.
-- Tests verify independent exact comparison counts and rejection of unsupported noncomparison inputs.
+- Tests verify independent exact comparison counts, insertion counters against inversion counts, rejection of unsupported noncomparison inputs, and the three 15,000-element input orders.
 - AddressSanitizer and UndefinedBehaviorSanitizer checks passed on the submitted implementation.
 - This report generator verifies every saved average against the raw CSV trials, and verifies both reference formulas.
 - The comparison setup and insertion counter match the supplied INSERTION.CPP. A fixed-capacity array replaces its nonstandard variable-length array; a fixed random seed makes the saved results reproducible.

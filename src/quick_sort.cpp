@@ -8,12 +8,18 @@
 
 using namespace std;
 
+// Aim: Implement recursive quick sort and count pivot comparisons.
+// Lomuto partition with last-element pivot. Average O(n log n), worst O(n^2).
+
 int partitionValues(int arr[], int low, int high, int &comparisons) {
     int pivot = arr[high];
     int i = low - 1;
     for (int j = low; j < high; j++) {
         comparisons++; // Compare each value with the pivot.
-        if (arr[j] <= pivot) swap(arr[++i], arr[j]);
+        if (arr[j] <= pivot) {
+            i++;
+            swap(arr[i], arr[j]);
+        }
     }
     swap(arr[i + 1], arr[high]);
     return i + 1;

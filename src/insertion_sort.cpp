@@ -8,6 +8,9 @@
 
 using namespace std;
 
+// Aim: Implement insertion sort and measure the supplied shift counter.
+// Insert each key into its sorted prefix. Best O(n); average/worst O(n^2).
+
 // Match the supplied lab example: count successful shifts only.
 void insertionSort(int arr[], int n, int &comparisons) {
     for (int i = 1; i < n; i++) {

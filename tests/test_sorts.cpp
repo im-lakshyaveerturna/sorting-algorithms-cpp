@@ -9,6 +9,32 @@
 #include "../src/bucket_sort.cpp"
 #include <climits>
 #include <limits>
+#include <vector>
+#include <random>
+#include <numeric>
+#include <stdexcept>
+#include <string>
+
+constexpr unsigned RANDOM_SEED = 20261005;
+
+void insertionTimedCheck(std::vector<int>& values) {
+    insertionSortTimed(values.data(), static_cast<int>(values.size()));
+}
+
+void radixCheck(std::vector<int>& values) {
+    if (!radixSort(values.data(), static_cast<int>(values.size())))
+        throw std::runtime_error("Radix rejected valid input");
+}
+
+void countingCheck(std::vector<int>& values) {
+    if (!countingSort(values.data(), static_cast<int>(values.size())))
+        throw std::runtime_error("Counting rejected valid input");
+}
+
+void bucketCheck(std::vector<double>& values) {
+    if (!bucketSort(values.data(), static_cast<int>(values.size())))
+        throw std::runtime_error("Bucket rejected valid input");
+}
 
 void require(bool condition, const std::string& message) {
     if (!condition) throw std::runtime_error(message);
@@ -20,13 +46,6 @@ void checkSort(Sort sort, std::vector<T> values) {
     std::sort(expected.begin(), expected.end());
     sort(values);
     require(values == expected, "Output differs from std::sort");
-}
-
-template <typename Action>
-void expectInvalid(Action action) {
-    bool rejected = false;
-    try { action(); } catch (const std::invalid_argument&) { rejected = true; }
-    require(rejected, "Expected invalid input rejection");
 }
 
 int main() {
@@ -98,11 +117,11 @@ int main() {
 
         for (const auto& input : std::vector<std::vector<int>>{
                 {}, {0}, {0, 0, 0}, {9, 0, 2, 2, 100, 11}, {1000000, 0, 1}}) {
-            checkSort(insertionSortTimed, input);
-            checkSort(radixSort, input);
-            checkSort(countingSort, input);
+            checkSort(insertionTimedCheck, input);
+            checkSort(radixCheck, input);
+            checkSort(countingCheck, input);
         }
-        checkSort(radixSort, std::vector<int>{INT_MAX, 0, INT_MAX - 1, 9});
+        checkSort(radixCheck, std::vector<int>{INT_MAX, 0, INT_MAX - 1, 9});
         for (int trial = 0; trial < 50; ++trial) {
             std::vector<int> integers(200);
             std::vector<double> fractions(200);
@@ -110,20 +129,37 @@ int main() {
                 integers[i] = std::uniform_int_distribution<int>(0, 1000)(generator);
                 fractions[i] = std::uniform_real_distribution<double>(0.0, 1.0)(generator);
             }
-            checkSort(insertionSortTimed, integers);
-            checkSort(radixSort, integers);
-            checkSort(countingSort, integers);
-            checkSort(bucketSort, fractions);
+            checkSort(insertionTimedCheck, integers);
+            checkSort(radixCheck, integers);
+            checkSort(countingCheck, integers);
+            checkSort(bucketCheck, fractions);
         }
         for (const auto& input : std::vector<std::vector<double>>{
                 {}, {0}, {0.5, 0.5}, {0.0, std::nextafter(1.0, 0.0), 0.1, 0.01}})
-            checkSort(bucketSort, input);
-        expectInvalid([] { std::vector<int> v{-1}; radixSort(v); });
-        expectInvalid([] { std::vector<int> v{-1}; countingSort(v); });
-        expectInvalid([] { std::vector<int> v{1000001}; countingSort(v); });
+            checkSort(bucketCheck, input);
+        int negative[] = {-1}, tooLarge[] = {1000001};
+        require(!radixSort(negative, 1), "Radix must reject negative values");
+        require(!countingSort(negative, 1), "Counting must reject negative values");
+        require(!countingSort(tooLarge, 1), "Counting range limit");
         for (double invalid : {-0.1, 1.0, std::numeric_limits<double>::infinity(),
                                std::numeric_limits<double>::quiet_NaN()})
-            expectInvalid([invalid] { std::vector<double> v{invalid}; bucketSort(v); });
+        {
+            double value[] = {invalid};
+            require(!bucketSort(value, 1), "Bucket must reject invalid values");
+        }
+        std::vector<double> fullBucket(1000, 0.5);
+        checkSort(bucketCheck, fullBucket);
+        fullBucket.push_back(0.5);
+        checkSort(bucketCheck, fullBucket);
+        for (int caseNumber = 0; caseNumber < 3; ++caseNumber) {
+            std::vector<int> values(15000);
+            prepareInsertionInput(values.data(), 15000, caseNumber);
+            if (caseNumber == 0) require(std::is_sorted(values.begin(), values.end()), "Best input order");
+            if (caseNumber == 2) require(std::is_sorted(values.rbegin(), values.rend()), "Worst input order");
+            std::sort(values.begin(), values.end());
+            for (int i = 0; i < 15000; ++i)
+                require(values[i] == i + 1, "Timing input must be a full permutation");
+        }
         std::cout << "All correctness, comparison-count and input-domain checks passed.\n";
     } catch (const std::exception& error) {
         std::cerr << "Test failure: " << error.what() << '\n';

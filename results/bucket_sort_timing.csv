@@ -1,2 +1,2 @@
 algorithm,n,trials,average_milliseconds
-bucket_sort,25,1000,0.000574
+bucket_sort,25,1000,0.000821

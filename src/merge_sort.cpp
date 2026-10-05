@@ -8,6 +8,9 @@
 
 using namespace std;
 
+// Aim: Implement recursive merge sort and count value comparisons.
+// Divide into two halves, sort each half, and merge. Time O(n log n).
+
 void mergeParts(int arr[], int left, int middle, int right, int &comparisons) {
     int temp[1000];
     int i = left, j = middle + 1, k = left;

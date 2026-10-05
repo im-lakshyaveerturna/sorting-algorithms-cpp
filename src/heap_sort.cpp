@@ -8,6 +8,9 @@
 
 using namespace std;
 
+// Aim: Implement heap sort and count value comparisons.
+// Build a max heap, then repeatedly place its root at the end. Time O(n log n).
+
 void heapify(int arr[], int n, int root, int &comparisons) {
     int largest = root;
     int left = 2 * root + 1;
