@@ -61,6 +61,19 @@ def main():
     for rows in comparisons.values():
         if [(row["n"], row["trials"]) for row in rows] != baseline:
             raise ValueError("Algorithms were run with different experiment settings")
+    expected_sizes = list(range(30, 1001, 10))
+    if [(int(n), int(trials)) for n, trials in baseline] != [(n, 10) for n in expected_sizes]:
+        raise ValueError("Comparison schedule must match INSERTION.CPP")
+    for algorithm in ALGORITHMS:
+        output = (ROOT / "results" / f"{algorithm}_output.txt").read_text().splitlines()
+        if len(output) != len(expected_sizes):
+            raise ValueError("Incorrect two-column output length")
+        for line, row in zip(output, comparisons[algorithm]):
+            columns = line.split()
+            if len(columns) != 2 or int(columns[0]) != int(row["n"]):
+                raise ValueError("Invalid two-column output")
+            if not math.isclose(float(columns[1]), float(row["average_comparisons"]), abs_tol=0.005):
+                raise ValueError("Two-column output differs from CSV")
     insertion = validate_timings("insertion_sort_timing.csv", "insertion_sort_timing_trials.csv", "case")
     small = []
     for name in ["radix_sort", "bucket_sort", "counting_sort"]:
@@ -69,11 +82,12 @@ def main():
     lines = [
         "# Sorting Algorithms: Lab Results", "",
         "## Experiment setup", "",
-        "- Comparison inputs: shuffled permutations of 1 through n; seed 20261005.",
-        f"- Sizes: {', '.join(n for n, _ in baseline)}; {baseline[0][1]} trials per size.",
+        "- Comparison inputs: rand() % 1000, allowing duplicates; srand(20261005) for reproducibility.",
+        "- Sizes: 30 through 1000 inclusive, in steps of 10; ten trials per size (98 sizes).",
         "- The exact same inputs are generated for each comparison algorithm on this build.",
-        "- Count only executed comparisons between array values, including unsuccessful value comparisons.",
-        "- Average comparisons = total key comparisons across trials / number of trials.",
+        "- Insertion follows the supplied INSERTION.CPP: increment only inside the shifting loop. This counts successful comparisons/shifts and excludes failed value comparisons.",
+        "- Merge, quick and heap count each executed value comparison, including false outcomes. These counters therefore use a different convention from the supplied insertion example.",
+        "- Average comparisons = total recorded counter across ten trials / 10.",
         "- Timing: steady_clock, expressed in milliseconds, with a warmup before each case.",
         "- Input creation, copying, validation and printing are outside the timed region.",
         "- Memory allocation required by a sorting algorithm is inside the timed region.",
@@ -87,13 +101,13 @@ def main():
         values.extend([float(row["n_log2_n"]), float(row["n_log10_n"])])
         lines.append(f"| {row['n']} | " + " | ".join(f"{value:,.2f}" for value in values) + " |")
     lines += ["", "![Comparison graphs](graphs/comparison_overview.png)", "",
-        "Insertion sort grows quadratically on these random permutations. Merge, quick and heap sort show the expected n log n average growth. The two logarithmic reference curves differ only by a constant factor: n log₂ n is about 3.322 times n log₁₀ n. They are reference functions, not exact predictions of an algorithm's comparison count.",
+        "Insertion sort grows quadratically on these random arrays. Merge, quick and heap sort show the expected n log n average growth. The two logarithmic reference curves differ only by a constant factor: n log₂ n is about 3.322 times n log₁₀ n. They are reference functions, not exact predictions of an algorithm's comparison count.",
         "", "## Insertion sort: 15,000 elements", "",
         "| Case | Input order | Trials | Mean time (ms) |", "|---|---|---:|---:|"]
     order = {"best": "Ascending", "average": "Fresh random permutation per trial", "worst": "Descending"}
     for row in insertion:
         lines.append(f"| {row['case'].title()} | {order[row['case']]} | {row['trials']} | {float(row['average_milliseconds']):.6f} |")
-    lines += ["", "The best case needs n − 1 comparisons and runs in O(n). The worst case needs n(n − 1)/2 comparisons, and the average and worst cases run in O(n²). For 15,000 distinct elements, these best/worst counts are 14,999 and 112,492,500 respectively. The separate timing implementation does not maintain a comparison counter.",
+    lines += ["", "The best case runs in O(n); the average and worst cases run in O(n²). Under the supplied shift-count convention, the best case records 0 and the reverse-sorted distinct worst case records n(n − 1)/2. The separate timing implementation does not maintain a counter.",
         "", "## Radix, bucket and counting sort", "",
         "| Algorithm | Elements | Trials | Mean time (ms) |", "|---|---:|---:|---:|"]
     for row in small:
@@ -106,9 +120,9 @@ def main():
         "- Tests verify independent exact comparison counts and rejection of unsupported noncomparison inputs.",
         "- AddressSanitizer and UndefinedBehaviorSanitizer checks passed on the submitted implementation.",
         "- This report generator verifies every saved average against the raw CSV trials, and verifies both reference formulas.",
-        "- The requested input sizes were not supplied, so these are documented default sizes. Re-run with assigned sizes if necessary.",
-        "- C++ shuffle sequences can differ between standard-library implementations; the seed reproduces the inputs on the same implementation.",
-        "- Quick sort uses a last-element pivot and can still take O(n²) time on sorted or equal inputs; smaller-partition recursion limits stack use.",
+        "- The comparison setup and insertion counter match the supplied INSERTION.CPP. A fixed-capacity array replaces its nonstandard variable-length array; a fixed random seed makes the saved results reproducible.",
+        "- rand() sequences can differ between C library implementations; the seed reproduces comparison inputs on the same implementation.",
+        "- Quick sort uses ordinary recursion and a last-element pivot; sorted or equal inputs can take O(n²) time and O(n) recursion depth.",
         ""]
     (ROOT / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
     print("Validated all raw measurements and generated REPORT.md")

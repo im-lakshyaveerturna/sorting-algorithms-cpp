@@ -15,7 +15,7 @@ Eight separate, commented C++17 programs for an intermediate college Design and 
 | 6b. Bucket sort | [src/bucket_sort.cpp](src/bucket_sort.cpp) | 25 elements and execution time in ms |
 | 6c. Counting sort | [src/counting_sort.cpp](src/counting_sort.cpp) | 25 elements and execution time in ms |
 
-Each `.cpp` has its own `main` and compiles separately. The shared [experiment.h](src/experiment.h) provides input generation, timing, validation and CSV output. The sorting implementations are in the individual files. `std::sort` is used only as a correctness reference outside the timed sections.
+Each `.cpp` has its own `main` and compiles separately. The first four programs are self-contained, using ordinary arrays and simple loops, following the supplied `INSERTION.CPP`. The remaining timing programs use [experiment.h](src/experiment.h) for timing, validation and CSV output. The sorting implementations are in the individual files. `std::sort` is used only as a correctness reference outside the timed sections.
 
 ## Compile and run
 
@@ -27,7 +27,7 @@ make test
 make run
 ```
 
-Or compile a single program, keeping `experiment.h` in the same source directory:
+Or compile a single comparison program; it needs no project header:
 
 ```sh
 c++ -std=c++17 -O2 -Wall -Wextra -Wpedantic src/merge_sort.cpp -o merge_sort
@@ -36,16 +36,19 @@ c++ -std=c++17 -O2 -Wall -Wextra -Wpedantic src/merge_sort.cpp -o merge_sort
 
 Compile each of the other `.cpp` files the same way. Do not link all eight program files together, because each has a separate `main`.
 
-The four comparison programs default to 10 random trials for n = 100, 500, 1,000, 2,000, 5,000, 10,000. These sizes are an assumption because the assignment did not list the given sizes. Supply different settings as positional arguments: first the trial count, then the sizes.
+The first four programs follow the supplied example:
 
-```sh
-./build/insertion_sort 20 100 500 1000 2000
-./build/merge_sort     20 100 500 1000 2000
-./build/quick_sort     20 100 500 1000 2000
-./build/heap_sort      20 100 500 1000 2000
-```
+- Array sizes from **30 through 1,000**, increasing by **10**.
+- **10 random instances** per size, each filled with `rand() % 1000` (duplicates are allowed).
+- A plain integer counter and `totalComparisons / 10.0` for the mean.
+- Console output of **two columns**: `size averageComparisons`.
+- Each program saves the same two-column output in `results/<algorithm>_output.txt`, plus summary and raw-trial CSVs for graphing.
 
-Use the same settings for all four. Limits are 1–1,000 trials and 1–100,000 elements. Insertion sort can take a long time for large sizes because it is quadratic. Running programs overwrites their corresponding result CSVs; regenerate the report and graphs afterward.
+The only input-generation change is a fixed `srand(20261005)` seed instead of `srand(time(0))`. This gives all four programs the same arrays and makes the submitted data reproducible on the same C library. To use a new sequence on every run, add `<ctime>` and change the seed call to `srand(time(0))`.
+
+The supplied `int arr[size]` is a variable-length array, which is not standard C++. These programs use `int arr[1000]` and process only the first `size` entries. Merge sort's temporary array also has capacity 1,000; these lab implementations support at most 1,000 elements.
+
+Run the programs without command-line arguments. To change the experiment, edit the size loop and instance loop in each file; if changing the maximum beyond 1,000, increase the array capacities too. Update the mean divisor and graph/report expectations if changing the number of trials. Running the programs overwrites their result files; regenerate the graphs and report afterward.
 
 ## Graphs and report
 
@@ -66,9 +69,11 @@ Each graph plots average comparisons, n log₂ n and n log₁₀ n against the n
 
 ## Comparison-count convention
 
-Count each executed comparison of one array value against another array value or pivot/key. Count both true and false outcomes. Do not count index bounds, loop conditions, assignments, swaps or validation. This avoids counting a value comparison when short-circuit evaluation stops at an array boundary.
+Insertion sort matches the supplied `INSERTION.CPP`: `comparisons++` is inside `while (j >= 0 && arr[j] > key)`. It therefore counts **successful comparisons that cause shifts**, not all executed value comparisons. The final failed comparison is excluded. Its counter equals the number of inversions in the original array.
 
-For example, insertion sort on `[3, 2, 1]` makes three key comparisons. On `[1, 2, 3]`, it makes two. The average in each CSV is the arithmetic mean over the random trials. Seed 20261005 and the shared driver give all four sorts the same inputs on the same C++ standard-library implementation.
+For example, `[1, 2, 3]` records **0**, `[3, 2, 1]` records **3**, and `[5, 3, 4]` records **2**. This convention is preserved to match the expected lab code. The best-case time is still O(n), even though this particular counter is zero.
+
+Merge sort counts each comparison between the two current merge values; quick sort counts every value-to-pivot comparison; heap sort counts each existing-child comparison with the current maximum. Both successful and unsuccessful comparisons count for these three sorts. Loop/index checks, assignments and swaps do not count. Because insertion follows its supplied shift-only convention, the four reported counters are not identical definitions of total key comparisons.
 
 ## Timing experiments
 
@@ -100,7 +105,7 @@ Each of these three programs measures 1,000 individual sorts and prints the mean
 |---|---|---|---|
 | Insertion | Insert the next key into a sorted prefix | Best O(n); average/worst O(n²) | O(1) |
 | Merge | Recursively split, then merge sorted halves | O(n log n) | O(n), plus recursion |
-| Quick | Partition around the last value | Average O(n log n); worst O(n²) | O(log n) stack using smaller-partition recursion |
+| Quick | Partition around the last value | Average O(n log n); worst O(n²) | Average O(log n), worst O(n) recursive stack |
 | Heap | Build a max heap and repeatedly extract its maximum | O(n log n) | O(log n) recursive heapify stack |
 | Radix | Stable counting sort on successive decimal digits | O(d(n + 10)) | O(n + 10) |
 | Bucket | Distribute into ten buckets, insertion sort each, concatenate | O(n + b + Σ nᵢ²), b = 10 here; worst O(n²) | O(n + b) |
@@ -121,6 +126,6 @@ Tests compare all algorithms against `std::sort`, exhaustively check permutation
 
 ## Recorded environment and reference
 
-Measurements were collected on October 5, 2026, on macOS 26.2, ARM64, using Apple Clang 17.0.0 with `-std=c++17 -O2`. Timings will change with hardware, compiler and machine load. The shuffled sequence may differ across C++ standard-library implementations.
+Measurements were collected on October 5, 2026, on macOS 26.2, ARM64, using Apple Clang 17.0.0 with `-std=c++17 -O2`. Timings will change with hardware, compiler and machine load. The random sequence may differ across C library implementations.
 
-The supplied [Sorting reference repository](https://github.com/Aayush-data-eng/Design-And-Analysis-of-Algorithm/tree/main/Sorting) was inspected. These are fresh implementations; no source code was copied. Its insertion example uses a different counting convention, and its merge example has compile/indexing errors. The submitted measurements use the convention documented above.
+The user-supplied `INSERTION.CPP` defines the expected array sizes, random inputs, ten-instance experiment, output format and insertion counter. The first four comparison programs follow that structure. The initially supplied [Sorting repository](https://github.com/Aayush-data-eng/Design-And-Analysis-of-Algorithm/tree/main/Sorting) was also inspected; its merge example has compile/indexing errors.

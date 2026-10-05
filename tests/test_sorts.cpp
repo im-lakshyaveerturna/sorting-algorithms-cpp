@@ -31,12 +31,13 @@ void expectInvalid(Action action) {
 
 int main() {
     try {
-        ComparisonSort sorts[] = {insertionSort, mergeSort, quickSort, heapSort};
+        using ArraySort = void (*)(int[], int, int&);
+        ArraySort sorts[] = {insertionSort, mergeSort, quickSort, heapSort};
         std::mt19937 generator(RANDOM_SEED);
-        for (ComparisonSort sort : sorts) {
+        for (ArraySort sort : sorts) {
             auto check = [sort](std::vector<int>& values) {
-                std::uint64_t count = 0;
-                sort(values, count);
+                int count = 0;
+                sort(values.data(), static_cast<int>(values.size()), count);
             };
             for (const auto& input : std::vector<std::vector<int>>{
                     {}, {1}, {2, 1}, {5, 5, 5}, {0, -3, 8, -3, 0},
@@ -60,25 +61,40 @@ int main() {
         for (int n = 0; n <= 30; ++n) {
             std::vector<int> values(n);
             std::iota(values.begin(), values.end(), 0);
-            std::uint64_t count = 0;
-            insertionSort(values, count);
-            require(count == static_cast<std::uint64_t>(std::max(0, n - 1)), "Insertion best count");
+            int count = 0;
+            insertionSort(values.data(), n, count);
+            require(count == 0, "Insertion best shift count");
             std::reverse(values.begin(), values.end());
             count = 0;
-            insertionSort(values, count);
-            require(count == static_cast<std::uint64_t>(n) * (n ? n - 1 : 0) / 2, "Insertion worst count");
+            insertionSort(values.data(), n, count);
+            require(count == n * (n - 1) / 2, "Insertion worst shift count");
             count = 0;
-            quickSort(values, count);
-            require(count == static_cast<std::uint64_t>(n) * (n ? n - 1 : 0) / 2, "Quick sorted count");
+            quickSort(values.data(), n, count);
+            require(count == n * (n - 1) / 2, "Quick sorted count");
         }
         std::vector<int> four = {4, 3, 2, 1};
-        std::uint64_t count = 0;
-        mergeSort(four, count);
+        int count = 0;
+        mergeSort(four.data(), 4, count);
         require(count == 4, "Merge four-element count");
         std::vector<int> three = {3, 1, 2};
         count = 0;
-        heapSort(three, count);
+        heapSort(three.data(), 3, count);
         require(count == 3, "Heap three-element count");
+
+        // Under the supplied convention, insertion's counter equals the
+        // original number of inversions, even when duplicate values occur.
+        for (int trial = 0; trial < 50; ++trial) {
+            std::vector<int> values(100);
+            for (int& value : values)
+                value = std::uniform_int_distribution<int>(0, 10)(generator);
+            int inversions = 0;
+            for (int i = 0; i < 100; ++i)
+                for (int j = i + 1; j < 100; ++j)
+                    if (values[i] > values[j]) ++inversions;
+            count = 0;
+            insertionSort(values.data(), 100, count);
+            require(count == inversions, "Insertion counter must equal inversions");
+        }
 
         for (const auto& input : std::vector<std::vector<int>>{
                 {}, {0}, {0, 0, 0}, {9, 0, 2, 2, 100, 11}, {1000000, 0, 1}}) {
