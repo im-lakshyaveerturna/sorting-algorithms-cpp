@@ -1,4 +1,0 @@
-case,n,trials,average_milliseconds
-best,15000,5,0.008208
-average,15000,5,32.048183
-worst,15000,5,56.559575

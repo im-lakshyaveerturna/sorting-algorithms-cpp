@@ -1,0 +1,13 @@
+name: Verify reference-aligned sorting labs
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Compile and run regression tests
+        run: make test
+      - name: Check memory access and undefined behaviour
+        run: make sanitize

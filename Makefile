@@ -1,7 +1,9 @@
 CXX = c++
-CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -Wpedantic
-PROGRAMS = insertion_sort merge_sort quick_sort heap_sort insertion_sort_timing radix_sort bucket_sort counting_sort
-BINARIES = $(addprefix build/,$(PROGRAMS))
+CXXFLAGS = -std=c++17 -O2 -Wall -Wextra -Wpedantic -Werror
+PYTHON ?= python3
+LABS = lab1 lab2 lab3 lab4 lab5 lab6 lab7
+EXAMPLES = bubbleSorst insertionSort mergesort
+BINARIES = $(addprefix build/,$(LABS) $(EXAMPLES))
 
 .PHONY: all run test sanitize graphs clean
 all: $(BINARIES)
@@ -9,31 +11,23 @@ all: $(BINARIES)
 build:
 	mkdir -p build
 
-build/%: src/%.cpp | build
+build/lab%: lab/lab%.cpp | build
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+build/%: Sorting/%.cpp | build
 	$(CXX) $(CXXFLAGS) $< -o $@
 
 run: all
-	./build/insertion_sort
-	./build/merge_sort
-	./build/quick_sort
-	./build/heap_sort
-	./build/insertion_sort_timing
-	./build/radix_sort
-	./build/bucket_sort
-	./build/counting_sort
+	@for program in $(LABS); do ./build/$$program || exit; done
 
-build/test_sorts: tests/test_sorts.cpp $(wildcard src/*.cpp) | build
-	$(CXX) $(CXXFLAGS) $< -o $@
+test: all
+	CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)" $(PYTHON) tests/test_sorts.py
 
-test: build/test_sorts
-	./build/test_sorts
-
-sanitize: | build
-	$(CXX) -std=c++17 -O1 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer tests/test_sorts.cpp -o build/test_sorts_sanitized
-	./build/test_sorts_sanitized
+sanitize:
+	$(MAKE) -B test CXXFLAGS="-std=c++17 -O1 -g -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer"
 
 graphs:
-	python3 scripts/plot_comparisons.py
+	$(PYTHON) scripts/plot_comparisons.py
 
 clean:
 	rm -rf build

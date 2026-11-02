@@ -1,135 +1,104 @@
-# Sorting Algorithms in C++
+# Sorting Algorithms in C++ — Reference-Aligned DAA Labs
 
-Eight separate, commented C++17 programs for an intermediate college Design and Analysis of Algorithms lab. The repository includes actual measurements, raw CSV trials, PNG/SVG graphs, and a [lab report](REPORT.md).
-
-Read the [44-page detailed PDF study guide](docs/Sorting_Programs_Detailed_Explanation.pdf) for code walkthroughs, worked dry runs, complexity analysis, graph interpretation, viva questions, and complete source listings. The guide explains source version `14b5fd3` and its recorded measurements.
+This repository follows the sorting code and saved Excel measurements in
+[Aayush-data-eng/Design-And-Analysis-of-Algorithm](https://github.com/Aayush-data-eng/Design-And-Analysis-of-Algorithm/tree/fb018e38df9ed2223aa6991af28c2b7294e8912f),
+commit `fb018e38df9ed2223aa6991af28c2b7294e8912f`.
+Credit for the reference programs and workbook data belongs to that repository's author.
+The sorting subset is adapted here with documented compilation, memory-safety and chart corrections.
+The upstream README describes a B.Sc. Physical Science course; this copy preserves its sorting lab setup.
 
 ## Programs
 
-| Task | Source file | Output |
+| Reference file | Experiment | Preserved settings |
 |---|---|---|
-| 1. Insertion sort | [src/insertion_sort.cpp](src/insertion_sort.cpp) | Average comparisons and graph data |
-| 2. Merge sort | [src/merge_sort.cpp](src/merge_sort.cpp) | Average comparisons and graph data |
-| 3. Quick sort | [src/quick_sort.cpp](src/quick_sort.cpp) | Average comparisons and graph data |
-| 4. Heap sort | [src/heap_sort.cpp](src/heap_sort.cpp) | Average comparisons and graph data |
-| 5. Separate insertion sort timing | [src/insertion_sort_timing.cpp](src/insertion_sort_timing.cpp) | Best, average and worst case, 15,000 elements |
-| 6a. Radix sort | [src/radix_sort.cpp](src/radix_sort.cpp) | 25 elements and execution time in ms |
-| 6b. Bucket sort | [src/bucket_sort.cpp](src/bucket_sort.cpp) | 25 elements and execution time in ms |
-| 6c. Counting sort | [src/counting_sort.cpp](src/counting_sort.cpp) | 25 elements and execution time in ms |
+| [lab/lab1.cpp](lab/lab1.cpp) | Insertion sort | Sizes 30–1000, step 10, ten instances; reference insertion counter |
+| [lab/lab2.cpp](lab/lab2.cpp) | Merge sort | Same size/instance schedule; comparisons during merging |
+| [lab/lab3.cpp](lab/lab3.cpp) | Quick sort | Last-element pivot, strict `< pivot` comparison |
+| [lab/lab4.cpp](lab/lab4.cpp) | Heap sort | Existing-child value comparisons |
+| [lab/lab5.cpp](lab/lab5.cpp) | Counting sort | Exact original 20 integers; one `clock()` timing |
+| [lab/lab6.cpp](lab/lab6.cpp) | Radix sort | Exact original 20 integers; one `clock()` timing |
+| [lab/lab7.cpp](lab/lab7.cpp) | Bucket sort | Exact original 20 fractions; one `clock()` timing |
 
-Every `.cpp` is self-contained and has its own `main`; there are no project headers or shared experiment framework. The programs use ordinary array parameters, loops, recursion where appropriate, and named sorting functions. Counting and radix sort use simple dynamically allocated arrays. Bucket sort uses an array of `vector<double>` lists, because textbook buckets hold variable numbers of elements. `std::sort` is used only to validate output, outside measured code.
+The reference's three simpler examples are in [Sorting/](Sorting/), including its original
+`bubbleSorst.cpp` filename. Existing `src/*.cpp` filenames are aliases to their corresponding
+`lab/labN.cpp` files, so both paths use the same implementation.
+Each source has its own `main()` and compiles independently. No shared project headers are needed.
 
-The implementations follow conventional undergraduate textbook algorithms covered in Indian CSE courses. They were checked against [IIT Ropar sorting slides](https://cse.iitrpr.ac.in/mukesh/CSL201-1718/L18-Sorting.pdf), [NPTEL/IIT Guwahati sorting material](https://archive.nptel.ac.in/content/storage2/courses/106103069/Module_5/sort.htm), and the [NPTEL/IIT Madras programming course](https://www.nptel.ac.in/courses/106106127). Your supplied `INSERTION.CPP` remains the authority for the comparison experiment setup and insertion counter. Colleges can use different partition schemes or counting conventions; the chosen variants are documented in [LAB_NOTES.md](LAB_NOTES.md).
+## Build and run
 
-## Compile and run
-
-Requires a C++17 compiler (GCC, Clang or recent MSVC). Run commands from the repository root so output files go to `results/`.
+Requires a C++17 compiler. Compile one program, or build all ten:
 
 ```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Wpedantic lab/lab1.cpp -o lab1
+./lab1
+
 make all
-make test
 make run
-```
-
-Or compile any single program; it needs no project header:
-
-```sh
-c++ -std=c++17 -O2 -Wall -Wextra -Wpedantic src/merge_sort.cpp -o merge_sort
-./merge_sort
-```
-
-Compile each of the other `.cpp` files the same way. Do not link all eight program files together, because each has a separate `main`.
-
-The first four programs follow the supplied example:
-
-- Array sizes from **30 through 1,000**, increasing by **10**.
-- **10 random instances** per size, each filled with `rand() % 1000` (duplicates are allowed).
-- A plain integer counter and `totalComparisons / 10.0` for the mean.
-- Console output of **two columns**: `size averageComparisons`.
-- Each program saves the same two-column output in `results/<algorithm>_output.txt`, plus summary and raw-trial CSVs for graphing.
-
-The only input-generation change is a fixed `srand(20261005)` seed instead of `srand(time(0))`. This gives all four programs the same arrays and makes the submitted data reproducible on the same C library. To use a new sequence on every run, add `<ctime>` and change the seed call to `srand(time(0))`.
-
-The supplied `int arr[size]` is a variable-length array, which is not standard C++. These programs use `int arr[1000]` and process only the first `size` entries. Merge sort's temporary array also has capacity 1,000; these lab implementations support at most 1,000 elements.
-
-Run the programs without command-line arguments. To change the experiment, edit the size loop and instance loop in each file; if changing the maximum beyond 1,000, increase the array capacities too. Update the mean divisor and graph/report expectations if changing the number of trials. Running the programs overwrites their result files; regenerate the graphs and report afterward.
-
-## Graphs and report
-
-Python is only needed for graphs and report generation; all sorting and measurements are C++.
-
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python scripts/summarize_results.py
-.venv/bin/python scripts/plot_comparisons.py
-```
-
-On Windows, use `.venv\Scripts\python.exe` instead. Generated graphs are already included, so Python is not required to view the submitted results.
-
-![All four comparison graphs](graphs/comparison_overview.png)
-
-Each graph plots average comparisons, n log₂ n and n log₁₀ n against the number of elements. Each algorithm also has its own PNG and scalable SVG in `graphs/`. Each panel uses its own vertical scale; insertion sort's much larger counts would compress the other algorithms on one shared scale.
-
-## Comparison-count convention
-
-Insertion sort matches the supplied `INSERTION.CPP`: `comparisons++` is inside `while (j >= 0 && arr[j] > key)`. It therefore counts **successful comparisons that cause shifts**, not all executed value comparisons. The final failed comparison is excluded. Its counter equals the number of inversions in the original array.
-
-For example, `[1, 2, 3]` records **0**, `[3, 2, 1]` records **3**, and `[5, 3, 4]` records **2**. This convention is preserved to match the expected lab code. The best-case time is still O(n), even though this particular counter is zero.
-
-Merge sort counts each comparison between the two current merge values; quick sort counts every value-to-pivot comparison; heap sort counts each existing-child comparison with the current maximum. Both successful and unsuccessful comparisons count for these three sorts. Loop/index checks, assignments and swaps do not count. Because insertion follows its supplied shift-only convention, the four reported counters are not identical definitions of total key comparisons.
-
-## Timing experiments
-
-Insertion sort uses exactly 15,000 distinct integers: ascending for the best case, a new shuffled permutation per trial for the average case, and descending for the worst case. Each mean uses five trials. A simple Fisher-Yates loop creates the random permutation. The separate timing code has no comparison counter.
-
-Radix and counting sort use these 25 integers:
-
-```text
-170 45 75 90 802 24 2 66 0 999 501 18 39 120 300 5 75 42 610 7 88 456 321 11 200
-```
-
-Their sorted result is:
-
-```text
-0 2 5 7 11 18 24 39 42 45 66 75 75 88 90 120 170 200 300 321 456 501 610 802 999
-```
-
-Bucket sort uses the same values divided by 1000. Its sorted result is:
-
-```text
-0 0.002 0.005 0.007 0.011 0.018 0.024 0.039 0.042 0.045 0.066 0.075 0.075 0.088 0.090 0.120 0.170 0.200 0.300 0.321 0.456 0.501 0.610 0.802 0.999
-```
-
-Each of these three programs measures 1,000 individual sorts and prints the mean milliseconds with six decimal places. These small durations include timer overhead and should not be interpreted as a universal performance ranking. Every timed output is checked; input copying, data generation, printing and validation are excluded. Algorithm-internal allocation is included. Timing uses `chrono::steady_clock` and `chrono::duration<double, milli>` to retain fractional milliseconds. A plain `clock()` measurement can round these tiny 25-element sorts to zero; avoid integer division when converting timer units.
-
-## Algorithm notes
-
-| Algorithm | Main idea | Time complexity | Auxiliary space |
-|---|---|---|---|
-| Insertion | Insert the next key into a sorted prefix | Best O(n); average/worst O(n²) | O(1) |
-| Merge | Recursively split, then merge sorted halves | O(n log n) | O(n), plus recursion |
-| Quick | Partition around the last value | Average O(n log n); worst O(n²) | Average O(log n), worst O(n) recursive stack |
-| Heap | Build a max heap and repeatedly extract its maximum | O(n log n) | O(log n) recursive heapify stack |
-| Radix | Stable counting sort on successive decimal digits | O(d(n + 10)) | O(n + 10) |
-| Bucket | Distribute into n buckets, insertion sort each, concatenate | Expected O(n) for uniform [0, 1) input; worst O(n²) | O(n) |
-| Counting | Frequencies, prefix sums, stable placement | O(n + k) | O(n + k) |
-
-`d` is the number of decimal digits and `k` the integer range size. Bucket sort uses n buckets. Its expected linear complexity assumes a roughly uniform distribution in [0, 1); if all elements fall in one bucket, insertion sorting that bucket can take O(n²).
-
-Radix sort accepts nonnegative `int` values, including `INT_MAX`. Counting sort accepts integers from 0 through 1,000,000 to keep memory use bounded. Bucket sort accepts finite numbers in [0, 1). The comparison sorts accept negative integers and duplicates. Radix, bucket and counting sort return `false` for unsupported input domains; their demo programs print an error if that happens.
-
-## Verification
-
-```sh
 make test
 make sanitize
 ```
 
-Tests compare all algorithms against `std::sort`, exhaustively check permutations through seven elements for the comparison sorts, check random/duplicate/boundary cases, verify exact comparison counts, and check invalid input rejection. Sanitizer testing checks memory access and undefined behavior. The report script verifies saved means against raw trials and checks both logarithmic formulas.
+On Windows, compile the canonical `lab/` or `Sorting/` source directly and use an `.exe`
+output name; symlink support is not needed for those paths. Python 3.10+ is needed for tests.
+GCC and Clang are supported. GitHub Actions runs regular and sanitizer checks.
 
-## Recorded environment and reference
+Like the reference, labs 1 and 2 print labelled size/average lines; labs 3 and 4 print
+one average per line. Labs 5–7 print the original array, sorted array and elapsed milliseconds.
+Successful programs exit with status zero. They use built-in inputs and require no keyboard input.
 
-Measurements were collected on October 5, 2026, on macOS 26.2, ARM64, using Apple Clang 17.0.0 with `-std=c++17 -O2`. Timings will change with hardware, compiler and machine load. The random sequence may differ across C library implementations.
+## Matching the graphs
 
-The user-supplied `INSERTION.CPP` defines the expected array sizes, random inputs, ten-instance experiment, output format and insertion counter. The first four comparison programs follow that structure. The initially supplied [Sorting repository](https://github.com/Aayush-data-eng/Design-And-Analysis-of-Algorithm/tree/main/Sorting) was also inspected; its merge example has compile/indexing errors.
+The four original native Excel workbooks are in `lab/`, with the same sheet, measured values,
+formulas, chart styles and positions. The insertion workbook's chart categories are corrected
+from `A1:A99` to `A2:A99`, with matching 98-entry category caches. No measured values change.
+The other three workbooks are byte-for-byte copies of upstream.
+
+![Reference workbook graphs](graphs/comparison_overview.png)
+
+PNG/SVG exports plot the exact saved workbook values with the same three series:
+`Number of Comparisons`, `n log2 n`, and `n log10 n`. Their rendering uses Matplotlib;
+use the Excel workbooks for the original native Excel presentation. Exports are not
+pixel-identical screenshots of Excel.
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python scripts/plot_comparisons.py
+.venv/bin/python scripts/summarize_results.py
+```
+
+On Windows, use `.venv\Scripts\python.exe`. Generated graphs are already included.
+[REPORT.md](REPORT.md) contains the source measurements; the CSVs in `results/` are
+exports of those same workbook values. Raw upstream trial data is unavailable and is not invented.
+
+Fresh runs follow the reference's `srand(time(0))` and
+`(rand() + index + instance) % 1000` generation pattern, evaluated with a wider intermediate
+to prevent signed overflow. New random measurements will vary with seed, platform and run.
+They do not overwrite the saved source workbooks or their graphs. To save a new run separately:
+
+```sh
+mkdir -p results/fresh
+./build/lab1 > results/fresh/lab1.txt
+```
+
+Matching saved measurements does not mean a fresh random execution will reproduce them.
+The original random seeds and raw arrays are not recorded in the reference repository.
+
+## Corrections and verification
+
+See [REFERENCE_ALIGNMENT.md](REFERENCE_ALIGNMENT.md) for every intentional code/workbook deviation,
+and [LAB_NOTES.md](LAB_NOTES.md) for algorithm and counter explanations.
+The reference's insertion counter is retained even though it is not an exact count of all
+executed key comparisons: it equals successful shifts plus `n - 1` for a nonempty array.
+Counting sort supports integer values in `[0, 1000000]`, radix sort nonnegative integers,
+and bucket sort finite floats in `[0, 1)`; invalid inputs throw `std::invalid_argument`.
+The original valid demo inputs are unchanged.
+
+Regression checks cover exhaustive permutations through seven elements, random and duplicate-heavy
+arrays, integer boundaries, empty arrays, variable-sized buffers, exact counters captured from the
+unmodified upstream functions, standalone demo outputs and workbook chart bindings. Workbook tests
+also verify that unrelated package parts remain unchanged.
+
+The previous implementations, 25-element/15000-element experiments, graphs and PDF guide remain
+available in Git under tag [`before-reference-alignment-f3d768f`](https://github.com/im-lakshyaveerturna/sorting-algorithms-cpp/tree/before-reference-alignment-f3d768f).
+They were superseded here because they describe a different experiment setup.

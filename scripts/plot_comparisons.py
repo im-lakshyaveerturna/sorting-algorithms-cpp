@@ -1,54 +1,57 @@
-"""Generate one graph per algorithm, plus a four-panel overview, from C++ CSVs."""
-import csv
-from pathlib import Path
-
+"""Plot the exact saved workbook data with the reference's three line series."""
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.ticker import StrMethodFormatter
+from extract_reference_data import ALGORITHMS, ROOT, export_data
 
-ROOT = Path(__file__).resolve().parents[1]
-ALGORITHMS = ["insertion_sort", "merge_sort", "quick_sort", "heap_sort"]
+plt.rcParams['svg.hashsalt'] = 'reference-sorting-labs'
 
 
-def draw(axis, name, rows):
-    n = [int(row["n"]) for row in rows]
-    for column, label, color, marker in [
-        ("average_comparisons", "Average comparisons", "#1565c0", "o"),
-        ("n_log2_n", r"$n\log_2 n$", "#d84315", "s"),
-        ("n_log10_n", r"$n\log_{10} n$", "#2e7d32", "^"),
+def save(figure, path):
+    metadata = {'Date': None} if path.suffix == '.svg' else None
+    figure.savefig(path, dpi=180, metadata=metadata)
+    if path.suffix == '.svg':
+        path.write_text('\n'.join(line.rstrip() for line in path.read_text().splitlines()) + '\n')
+
+
+def draw(axis, algorithm, rows):
+    n = [row['n'] for row in rows]
+    for column, label, color in [
+        ('average_comparisons', 'Number of Comparisons', '#4472C4'),
+        ('n_log2_n', 'n log2 n', '#ED7D31'),
+        ('n_log10_n', 'n log10 n', '#A5A5A5'),
     ]:
-        axis.plot(n, [float(row[column]) for row in rows], label=label,
-                  color=color, marker=marker, linewidth=1.8, markersize=4)
-    axis.set_title(name.replace("_", " ").title())
-    axis.set_xlabel("Number of elements (n)")
-    axis.set_ylabel("Comparisons / reference function value")
-    axis.grid(alpha=0.25)
-    axis.legend(fontsize=9)
-    axis.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+        axis.plot(n, [row[column] for row in rows], color=color, label=label, linewidth=1.8)
+    axis.set_title(algorithm.replace('_', ' ').title() + ' Complexity Analysis')
+    axis.set_xlabel('Number of Elements (n)')
+    axis.set_ylabel('Comparisons / reference function value')
+    axis.set_xlim(30, 1000)
+    axis.set_ylim(bottom=0)
+    axis.yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
+    axis.grid(axis='y', color='#D9D9D9', linewidth=0.7)
+    axis.spines[['top', 'right']].set_visible(False)
+    axis.legend(loc='upper center', bbox_to_anchor=(0.5, -0.19), ncol=3, fontsize=8, frameon=False)
 
 
 def main():
-    destination = ROOT / "graphs"
+    data = export_data()
+    destination = ROOT / 'graphs'
     destination.mkdir(exist_ok=True)
-    overview, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
+    overview, axes = plt.subplots(2, 2, figsize=(13, 9), layout='constrained')
     for name, axis in zip(ALGORITHMS, axes.flat):
-        with (ROOT / "results" / f"{name}_comparisons.csv").open(newline="") as file:
-            rows = list(csv.DictReader(file))
-        if not rows:
-            raise ValueError(f"No results for {name}")
-        figure, single_axis = plt.subplots(figsize=(8, 5), constrained_layout=True)
-        draw(single_axis, name, rows)
-        figure.suptitle(f"Mean over {rows[0]['trials']} shuffled-input trials per size", fontsize=11)
-        figure.savefig(destination / f"{name}_comparisons.png", dpi=180)
-        figure.savefig(destination / f"{name}_comparisons.svg")
+        figure, single = plt.subplots(figsize=(9, 5.5), layout='constrained')
+        draw(single, name, data[name])
+        for extension in ['png', 'svg']:
+            save(figure, destination / f'{name}_comparisons.{extension}')
         plt.close(figure)
-        draw(axis, name, rows)
-    overview.suptitle("Sorting comparisons against n log₂ n and n log₁₀ n")
-    overview.savefig(destination / "comparison_overview.png", dpi=180)
-    overview.savefig(destination / "comparison_overview.svg")
+        draw(axis, name, data[name])
+    overview.suptitle('Reference workbook measurements (saved source data)')
+    for extension in ['png', 'svg']:
+        save(overview, destination / f'comparison_overview.{extension}')
     plt.close(overview)
-    print(f"Saved PNG and SVG graphs to {destination}")
+    print('Saved four graphs and overview from the original workbook measurements')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
